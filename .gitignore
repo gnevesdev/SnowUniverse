@@ -1,0 +1,9 @@
+# Visual Studio project files
+.vs/*
+*.sln
+*.vcxproj
+*.vcxproj.*
+
+# Output
+bin/*
+int/*
