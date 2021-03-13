@@ -2,13 +2,20 @@
 #include <SDL.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include "math.h"
 
 /* TODO
 - Add support for game controller in the future
 */
 
+typedef struct Planet {
+	Vector2_t position;
+	Uint8 size;
+} Planet_t;
+
 typedef struct Spaceship {
-	int x, y;
+	Vector2_t position;
+	Uint8 size;
 } Spaceship_t;
 
 #define FPS 60
@@ -16,7 +23,12 @@ typedef struct Spaceship {
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
-static Spaceship_t playerObject = { 80, 80 };
+static Planet_t mainPlanetObject = {
+	{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
+	80
+};
+
+static Spaceship_t playerObject = {{80, 80}, 16};
 
 void update(void);
 void render(SDL_Renderer* renderer);
@@ -93,6 +105,16 @@ int main(int argc, char* argv[]) {
 }
 
 void update(void) {
+	if (playerObject.position.x < mainPlanetObject.position.x)
+		++playerObject.position.x;
+	else if (playerObject.position.x > mainPlanetObject.position.x)
+		--playerObject.position.x;
+
+	if (playerObject.position.y < mainPlanetObject.position.y)
+		++playerObject.position.y;
+	else if (playerObject.position.y > mainPlanetObject.position.y)
+		--playerObject.position.y;
+
 	return;
 }
 
@@ -101,23 +123,23 @@ void render(SDL_Renderer* renderer) {
 	SDL_RenderClear(renderer);
 
 	/* Square Planet */ {
-		SDL_Rect squarePlanet = (SDL_Rect){
-			SCREEN_WIDTH / 3,
-			SCREEN_HEIGHT / 3,
-			SCREEN_WIDTH / 3,
-			SCREEN_HEIGHT / 3
+		SDL_Rect mainPlanet = (SDL_Rect){
+			mainPlanetObject.position.x - mainPlanetObject.size / 2,
+			mainPlanetObject.position.y - mainPlanetObject.size / 2,
+			mainPlanetObject.size,
+			mainPlanetObject.size
 		};
 
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-		SDL_RenderFillRect(renderer, &squarePlanet);
+		SDL_RenderFillRect(renderer, &mainPlanet);
 	}
 
 	/* Player */ {
 		SDL_Rect player = (SDL_Rect){
-			playerObject.x - 8,
-			playerObject.y - 8,
-			16,
-			16
+			playerObject.position.x - playerObject.size / 2,
+			playerObject.position.y - playerObject.size / 2,
+			playerObject.size,
+			playerObject.size
 		};
 
 		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
