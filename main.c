@@ -7,18 +7,28 @@
 - Add support for game controller in the future
 */
 
+#define FPS 60
+
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
+
+void update(void);
+void render(SDL_Renderer* renderer);
+
 int main(int argc, char* argv[]) {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
 		printf("ERROR: Unable to initialize SDL!\n");
 		exit(EXIT_FAILURE);
 	}
+
+	static SDL_Window* gameWindow;
 	
-	SDL_Window* gameWindow = SDL_CreateWindow(
+	gameWindow = SDL_CreateWindow(
 		"Snow Universe",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
-		800,
-		600,
+		SCREEN_WIDTH,
+		SCREEN_HEIGHT,
 		NULL
 	);
 
@@ -27,7 +37,9 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	SDL_Renderer* gameRenderer = SDL_CreateRenderer(
+	SDL_Renderer* gameRenderer;
+
+	gameRenderer = SDL_CreateRenderer(
 		gameWindow,
 		-1,
 		SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
@@ -41,6 +53,9 @@ int main(int argc, char* argv[]) {
 	bool running = true;
 
 	while (running) {
+		static Uint32 frameStart;
+		frameStart = SDL_GetTicks();
+
 		/* EVENTS SCOPE */ {
 			SDL_Event event;
 			while (SDL_PollEvent(&event)) {
@@ -51,6 +66,15 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
+
+		update();
+		render(gameRenderer);
+
+		static Uint32 deltaTime;
+		deltaTime = SDL_GetTicks() - frameStart;
+
+		if (deltaTime < 1000 / FPS)
+			SDL_Delay(1000 / FPS - deltaTime);
 	}
 
 	SDL_DestroyRenderer(gameRenderer);
@@ -60,4 +84,27 @@ int main(int argc, char* argv[]) {
 	SDL_Quit();
 
 	return 0;
+}
+
+void update(void) {
+	return;
+}
+
+void render(SDL_Renderer* renderer) {
+	SDL_RenderClear(renderer);
+
+	SDL_Rect squarePlanet = (SDL_Rect) {
+		SCREEN_WIDTH / 3,
+		SCREEN_HEIGHT / 3,
+		SCREEN_WIDTH / 3,
+		SCREEN_HEIGHT / 3
+	};
+
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	SDL_RenderFillRect(renderer, &squarePlanet);
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_RenderPresent(renderer);
+
+	return;
 }
