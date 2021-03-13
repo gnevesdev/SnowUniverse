@@ -7,10 +7,16 @@
 - Add support for game controller in the future
 */
 
+typedef struct Spaceship {
+	int x, y;
+} Spaceship_t;
+
 #define FPS 60
 
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
+
+static Spaceship_t playerObject = { 80, 80 };
 
 void update(void);
 void render(SDL_Renderer* renderer);
@@ -91,19 +97,33 @@ void update(void) {
 }
 
 void render(SDL_Renderer* renderer) {
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
-	SDL_Rect squarePlanet = (SDL_Rect) {
-		SCREEN_WIDTH / 3,
-		SCREEN_HEIGHT / 3,
-		SCREEN_WIDTH / 3,
-		SCREEN_HEIGHT / 3
-	};
+	/* Square Planet */ {
+		SDL_Rect squarePlanet = (SDL_Rect){
+			SCREEN_WIDTH / 3,
+			SCREEN_HEIGHT / 3,
+			SCREEN_WIDTH / 3,
+			SCREEN_HEIGHT / 3
+		};
 
-	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	SDL_RenderFillRect(renderer, &squarePlanet);
+		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+		SDL_RenderFillRect(renderer, &squarePlanet);
+	}
 
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	/* Player */ {
+		SDL_Rect player = (SDL_Rect){
+			playerObject.x - 8,
+			playerObject.y - 8,
+			16,
+			16
+		};
+
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+		SDL_RenderFillRect(renderer, &player);
+	}
+
 	SDL_RenderPresent(renderer);
 
 	return;
