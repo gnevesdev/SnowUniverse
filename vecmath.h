@@ -20,4 +20,11 @@ Vector2_t vector2Normalized(
 	Vector2_t vector
 );
 
+float calculateGravity(
+	const float gravitationalConstant,
+	int mass1,
+	int mass2,
+	float distance
+);
+
 #endif

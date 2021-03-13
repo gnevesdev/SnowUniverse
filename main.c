@@ -11,11 +11,13 @@
 typedef struct Planet {
 	Vector2_t position;
 	Uint8 size;
+	Uint8 mass;
 } Planet_t;
 
 typedef struct Spaceship {
 	Vector2_t position;
 	Uint8 size;
+	Uint8 mass;
 } Spaceship_t;
 
 #define FPS 60
@@ -23,12 +25,15 @@ typedef struct Spaceship {
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
+#define GRAVITATIONAL_CONSTANT 9.08
+
 static Planet_t mainPlanetObject = {
 	{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
-	80
+	80,
+	300
 };
 
-static Spaceship_t playerObject = {{80, 80}, 16};
+static Spaceship_t playerObject = {{80, 80}, 16, 100};
 
 void update(void);
 void render(SDL_Renderer* p_renderer);
@@ -118,9 +123,18 @@ void update(void) {
 			mainPlanetObject.position
 		);
 
+		float gravityForce = calculateGravity(
+			GRAVITATIONAL_CONSTANT,
+			playerObject.mass,
+			mainPlanetObject.mass,
+			distanceToClosestPlanet
+		);
+
+		printf("%f\n", gravityForce);
+
 		if ((int)distanceToClosestPlanet != 0) {
-			playerObject.position.x -= velocity.x;
-			playerObject.position.y -= velocity.y;
+			playerObject.position.x -= velocity.x * gravityForce;
+			playerObject.position.y -= velocity.y * gravityForce;
 		}
 	}
 
