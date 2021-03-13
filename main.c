@@ -2,7 +2,7 @@
 #include <SDL.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "math.h"
+#include "vecmath.h"
 
 /* TODO
 - Add support for game controller in the future
@@ -105,15 +105,24 @@ int main(int argc, char* argv[]) {
 }
 
 void update(void) {
-	if (playerObject.position.x < mainPlanetObject.position.x)
-		++playerObject.position.x;
-	else if (playerObject.position.x > mainPlanetObject.position.x)
-		--playerObject.position.x;
+	/* FUCKING GRAVITY!!!!!! */ {
+		Vector2_t velocity = vector2Difference(
+			playerObject.position,
+			mainPlanetObject.position
+		);
 
-	if (playerObject.position.y < mainPlanetObject.position.y)
-		++playerObject.position.y;
-	else if (playerObject.position.y > mainPlanetObject.position.y)
-		--playerObject.position.y;
+		float distanceToClosestPlanet = vector2Distance(
+			playerObject.position,
+			mainPlanetObject.position
+		);
+
+		velocity = vector2Normalized(velocity);
+
+		if ((int)distanceToClosestPlanet != 0) {
+			playerObject.position.x -= velocity.x;
+			playerObject.position.y -= velocity.y;
+		}
+	}
 
 	return;
 }
@@ -136,8 +145,8 @@ void render(SDL_Renderer* p_renderer) {
 
 	/* Player */ {
 		SDL_Rect player = (SDL_Rect){
-			playerObject.position.x - playerObject.size / 2,
-			playerObject.position.y - playerObject.size / 2,
+			(int)playerObject.position.x - playerObject.size / 2,
+			(int)playerObject.position.y - playerObject.size / 2,
 			playerObject.size,
 			playerObject.size
 		};
