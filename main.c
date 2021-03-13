@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "vecmath.h"
+#include "primitives.h"
 
 /* TODO
 - Add support for game controller in the future
@@ -146,15 +147,14 @@ void render(SDL_Renderer* p_renderer) {
 	SDL_RenderClear(p_renderer);
 
 	/* Square Planet */ {
-		SDL_Rect mainPlanet = (SDL_Rect){
-			mainPlanetObject.position.x - mainPlanetObject.size / 2,
-			mainPlanetObject.position.y - mainPlanetObject.size / 2,
+		fillCircle(
+			p_renderer,
+			(int)mainPlanetObject.position.x,
+			(int)mainPlanetObject.position.y,
 			mainPlanetObject.size,
-			mainPlanetObject.size
-		};
-
-		SDL_SetRenderDrawColor(p_renderer, 255, 255, 255, 255);
-		SDL_RenderFillRect(p_renderer, &mainPlanet);
+			45, 62, 30,
+			255
+		);
 	}
 
 	/* Player */ {
