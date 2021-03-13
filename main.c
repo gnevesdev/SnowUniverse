@@ -31,7 +31,7 @@ static Planet_t mainPlanetObject = {
 static Spaceship_t playerObject = {{80, 80}, 16};
 
 void update(void);
-void render(SDL_Renderer* renderer);
+void render(SDL_Renderer* p_renderer);
 
 int main(int argc, char* argv[]) {
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
@@ -39,9 +39,9 @@ int main(int argc, char* argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	static SDL_Window* gameWindow;
+	static SDL_Window* p_gameWindow;
 	
-	gameWindow = SDL_CreateWindow(
+	p_gameWindow = SDL_CreateWindow(
 		"Snow Universe",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
@@ -50,20 +50,20 @@ int main(int argc, char* argv[]) {
 		NULL
 	);
 
-	if (!gameWindow) {
+	if (!p_gameWindow) {
 		printf("ERROR: Could not create the game window!\n");
 		exit(EXIT_FAILURE);
 	}
 
-	SDL_Renderer* gameRenderer;
+	SDL_Renderer* p_gameRenderer;
 
-	gameRenderer = SDL_CreateRenderer(
-		gameWindow,
+	p_gameRenderer = SDL_CreateRenderer(
+		p_gameWindow,
 		-1,
 		SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
 	);
 
-	if (!gameRenderer) {
+	if (!p_gameRenderer) {
 		printf("ERROR: Could not create a proper renderer!\n");
 		exit(EXIT_FAILURE);
 	}
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		update();
-		render(gameRenderer);
+		render(p_gameRenderer);
 
 		static Uint32 deltaTime;
 		deltaTime = SDL_GetTicks() - frameStart;
@@ -95,10 +95,10 @@ int main(int argc, char* argv[]) {
 			SDL_Delay(1000 / FPS - deltaTime);
 	}
 
-	SDL_DestroyRenderer(gameRenderer);
-	gameRenderer = NULL;
-	SDL_DestroyWindow(gameWindow);
-	gameWindow = NULL;
+	SDL_DestroyRenderer(p_gameRenderer);
+	p_gameRenderer = NULL;
+	SDL_DestroyWindow(p_gameWindow);
+	p_gameWindow = NULL;
 	SDL_Quit();
 
 	return 0;
@@ -118,9 +118,9 @@ void update(void) {
 	return;
 }
 
-void render(SDL_Renderer* renderer) {
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_RenderClear(renderer);
+void render(SDL_Renderer* p_renderer) {
+	SDL_SetRenderDrawColor(p_renderer, 0, 0, 0, 255);
+	SDL_RenderClear(p_renderer);
 
 	/* Square Planet */ {
 		SDL_Rect mainPlanet = (SDL_Rect){
@@ -130,8 +130,8 @@ void render(SDL_Renderer* renderer) {
 			mainPlanetObject.size
 		};
 
-		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-		SDL_RenderFillRect(renderer, &mainPlanet);
+		SDL_SetRenderDrawColor(p_renderer, 255, 255, 255, 255);
+		SDL_RenderFillRect(p_renderer, &mainPlanet);
 	}
 
 	/* Player */ {
@@ -142,11 +142,11 @@ void render(SDL_Renderer* renderer) {
 			playerObject.size
 		};
 
-		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-		SDL_RenderFillRect(renderer, &player);
+		SDL_SetRenderDrawColor(p_renderer, 255, 0, 0, 255);
+		SDL_RenderFillRect(p_renderer, &player);
 	}
 
-	SDL_RenderPresent(renderer);
+	SDL_RenderPresent(p_renderer);
 
 	return;
 }
