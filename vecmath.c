@@ -22,6 +22,7 @@ Vector2_t vector2Difference(Vector2_t vec1, Vector2_t vec2) {
 }
 
 /* unsigned */ float vector2Distance(Vector2_t vec1, Vector2_t vec2) {
+	/* Pythagoras theorem, h^2 = c1^2 + c2^2 */
 	return squareRoot(square(vec1.x - vec2.x) + square(vec1.y - vec2.y));
 }
 

@@ -111,12 +111,12 @@ void update(void) {
 			mainPlanetObject.position
 		);
 
+		velocity = vector2Normalized(velocity);
+
 		float distanceToClosestPlanet = vector2Distance(
 			playerObject.position,
 			mainPlanetObject.position
 		);
-
-		velocity = vector2Normalized(velocity);
 
 		if ((int)distanceToClosestPlanet != 0) {
 			playerObject.position.x -= velocity.x;
