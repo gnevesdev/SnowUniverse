@@ -1,11 +1,12 @@
-#ifndef MATH_H
-#define MATH_H
+#ifndef VECMATH_H
+#define VECMATH_H
 
 #define GRAVITATIONAL_CONSTANT 9.08
 
 #define PI 3.1416
 
-typedef struct Vector2 {
+typedef struct Vector2
+{
 	float x;
 	float y;
 } Vector2_t;

@@ -1,9 +1,5 @@
-# Visual Studio project files
-.vs/*
-*.sln
-*.vcxproj
-*.vcxproj.*
+# makefiles
+make.bat
 
 # Output
 bin/*
-int/*
