@@ -26,6 +26,7 @@ typedef struct Spaceship {
 	Vector2_t forward;
 	float angle;
 	Direction_t direction;
+	bool engine;
 } Spaceship_t;
 
 #define FPS 60
@@ -45,7 +46,8 @@ static Spaceship_t playerObject = {
 	100,
 	{.0f, .0f},
 	0,
-	(Direction_t)NULLDIR
+	(Direction_t)NULLDIR,
+	false
 };
 
 void update(void);
@@ -58,7 +60,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	static SDL_Window* p_gameWindow;
-	
+
 	p_gameWindow = SDL_CreateWindow(
 		"Snow Universe",
 		SDL_WINDOWPOS_CENTERED,
@@ -111,6 +113,11 @@ int main(int argc, char* argv[]) {
 
 					case SDLK_d:
 						playerObject.direction = (Direction_t)RIGHT;
+						break;
+					
+					case SDLK_SPACE:
+						playerObject.engine = true;
+						break;
 					}
 					break;
 
@@ -119,11 +126,16 @@ int main(int argc, char* argv[]) {
 					case SDLK_a:
 						playerObject.direction = (Direction_t)NULLDIR;
 						break;
-					
+
 					case SDLK_d:
 						playerObject.direction = (Direction_t)NULLDIR;
 						break;
+					
+					case SDLK_SPACE:
+						playerObject.engine = false;
+						break;
 					}
+					break;
 				}
 			}
 		}
@@ -166,7 +178,7 @@ void update(void) {
 
 			if (playerObject.angle > 2 * PI)
 				playerObject.angle = 0;
-		
+
 			playerObject.forward.x = cos(playerObject.angle);
 			playerObject.forward.y = sin(playerObject.angle);
 
@@ -179,6 +191,11 @@ void update(void) {
 			playerObject.position,
 			mainPlanetObject.position
 		);
+
+		if (playerObject.engine) {
+			velocity.x += playerObject.forward.x * 1000;
+			velocity.y += playerObject.forward.y * 1000;
+		}
 
 		velocity = vector2Normalized(velocity);
 
@@ -219,7 +236,7 @@ void render(SDL_Renderer* p_renderer) {
 	}
 
 	/* Player */ {
-		SDL_Rect player = (SDL_Rect) {
+		SDL_Rect player = (SDL_Rect){
 			(int)playerObject.position.x - playerObject.size / 2,
 			(int)playerObject.position.y - playerObject.size / 2,
 			playerObject.size,
