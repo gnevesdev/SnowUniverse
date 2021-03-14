@@ -1,6 +1,10 @@
 #ifndef MATH_H
 #define MATH_H
 
+#define GRAVITATIONAL_CONSTANT 9.08
+
+#define PI 3.1416
+
 typedef struct Vector2 {
 	float x;
 	float y;

@@ -9,9 +9,13 @@
 - Add support for game controller in the future
 */
 
+typedef enum Direction {
+	NULLDIR, LEFT, RIGHT
+} Direction_t;
+
 typedef struct Planet {
 	Vector2_t position;
-	Uint8 size;
+	Uint8 radius;
 	Uint8 mass;
 } Planet_t;
 
@@ -19,6 +23,9 @@ typedef struct Spaceship {
 	Vector2_t position;
 	Uint8 size;
 	Uint8 mass;
+	Vector2_t forward;
+	float angle;
+	Direction_t direction;
 } Spaceship_t;
 
 #define FPS 60
@@ -26,15 +33,20 @@ typedef struct Spaceship {
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
-#define GRAVITATIONAL_CONSTANT 9.08
-
 static Planet_t mainPlanetObject = {
 	{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
 	80,
 	300
 };
 
-static Spaceship_t playerObject = {{80, 80}, 16, 100};
+static Spaceship_t playerObject = {
+	{80.f, 80.f},
+	16,
+	100,
+	{.0f, .0f},
+	0,
+	(Direction_t)NULLDIR
+};
 
 void update(void);
 void render(SDL_Renderer* p_renderer);
@@ -87,6 +99,28 @@ int main(int argc, char* argv[]) {
 				case SDL_QUIT:
 					running = false;
 					break;
+
+				case SDL_KEYDOWN:
+					switch (event.key.keysym.sym) {
+					case SDLK_a:
+						playerObject.direction = (Direction_t)LEFT;
+						break;
+
+					case SDLK_d:
+						playerObject.direction = (Direction_t)RIGHT;
+					}
+					break;
+
+				case SDL_KEYUP:
+					switch (event.key.keysym.sym) {
+					case SDLK_a:
+						playerObject.direction = (Direction_t)NULLDIR;
+						break;
+					
+					case SDLK_d:
+						playerObject.direction = (Direction_t)NULLDIR;
+						break;
+					}
 				}
 			}
 		}
@@ -111,6 +145,32 @@ int main(int argc, char* argv[]) {
 }
 
 void update(void) {
+	/* Player direction */ {
+		switch (playerObject.direction) {
+		case (Direction_t)LEFT:
+			playerObject.angle -= .1f;
+
+			if (playerObject.angle < 0)
+				playerObject.angle = 2 * PI;
+
+			playerObject.forward.x = cos(playerObject.angle);
+			playerObject.forward.y = sin(playerObject.angle);
+
+			break;
+
+		case (Direction_t)RIGHT:
+			playerObject.angle += .1f;
+
+			if (playerObject.angle > 2 * PI)
+				playerObject.angle = 0;
+
+			playerObject.forward.x = cos(playerObject.angle);
+			playerObject.forward.y = sin(playerObject.angle);
+			
+			break;
+		}
+	}
+
 	/* FUCKING GRAVITY!!!!!! */ {
 		Vector2_t velocity = vector2Difference(
 			playerObject.position,
@@ -131,8 +191,6 @@ void update(void) {
 			distanceToClosestPlanet
 		);
 
-		printf("%f\n", gravityForce);
-
 		if ((int)distanceToClosestPlanet != 0) {
 			playerObject.position.x -= velocity.x * gravityForce;
 			playerObject.position.y -= velocity.y * gravityForce;
@@ -151,14 +209,14 @@ void render(SDL_Renderer* p_renderer) {
 			p_renderer,
 			(int)mainPlanetObject.position.x,
 			(int)mainPlanetObject.position.y,
-			mainPlanetObject.size,
+			mainPlanetObject.radius,
 			45, 62, 30,
 			255
 		);
 	}
 
 	/* Player */ {
-		SDL_Rect player = (SDL_Rect){
+		SDL_Rect player = (SDL_Rect) {
 			(int)playerObject.position.x - playerObject.size / 2,
 			(int)playerObject.position.y - playerObject.size / 2,
 			playerObject.size,
@@ -167,6 +225,15 @@ void render(SDL_Renderer* p_renderer) {
 
 		SDL_SetRenderDrawColor(p_renderer, 255, 0, 0, 255);
 		SDL_RenderFillRect(p_renderer, &player);
+
+		SDL_SetRenderDrawColor(p_renderer, 0, 0, 255, 255);
+		SDL_RenderDrawLine(
+			p_renderer,
+			playerObject.position.x,
+			playerObject.position.y,
+			playerObject.position.x + playerObject.forward.x * 15,
+			playerObject.position.y + playerObject.forward.y * 15
+		);
 	}
 
 	SDL_RenderPresent(p_renderer);
