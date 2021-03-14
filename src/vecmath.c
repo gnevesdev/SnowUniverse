@@ -16,11 +16,27 @@ static float square(float value)
 	return value * value;
 }
 
-Vector2_t vector2Difference(Vector2_t vec1, Vector2_t vec2)
+Vector2_t vector2Sub(Vector2_t vec1, Vector2_t vec2)
 {
 	return (Vector2_t) {
 		vec1.x - vec2.x,
 		vec1.y - vec2.y
+	};
+}
+
+Vector2_t vector2Sum(Vector2_t vec1, Vector2_t vec2)
+{
+	return (Vector2_t) {
+		vec1.x + vec2.x,
+		vec1.y + vec2.y
+	};
+}
+
+Vector2_t vector2Mul(Vector2_t vec1, Vector2_t vec2)
+{
+	return (Vector2_t) {
+		vec1.x * vec2.x,
+		vec1.y * vec2.y
 	};
 }
 
@@ -44,12 +60,4 @@ Vector2_t vector2Normalized(Vector2_t vector)
 	vector.y /= magnitude;
 
 	return vector;
-}
-
-float gimmeThatBadBoyGravity(
-	const float gravitationalConstant,
-	int mass1, int mass2, float distance
-)
-{
-	return gravitationalConstant * (mass1 * mass2 / square(distance));
 }

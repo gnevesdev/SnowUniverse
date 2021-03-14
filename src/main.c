@@ -19,14 +19,14 @@ typedef struct Planet
 {
 	Vector2_t position;
 	Uint8 radius;
-	Uint8 mass;
+	Uint16 mass;
 } Planet_t;
 
 typedef struct Spaceship
 {
 	Vector2_t position;
 	Uint8 size;
-	Uint8 mass;
+	Uint16 mass;
 	Vector2_t forward;
 	float angle;
 	Direction_t direction;
@@ -41,13 +41,13 @@ typedef struct Spaceship
 static Planet_t mainPlanetObject = {
 	{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
 	80,
-	255
+	2000
 };
 
 static Spaceship_t playerObject = {
 	{80.f, 80.f},
 	16,
-	100,
+	6000,
 	{.0f, .0f},
 	0,
 	(Direction_t)NULLDIR,
@@ -207,38 +207,70 @@ static void updatePlayerDirection(void)
 	return;
 }
 
-static void doFunckingGravity(void)
+static Vector2_t gimmeThatBadBoyGravity(
+	Vector2_t body1position,
+	Uint16 body1mass,
+	Vector2_t body2position,
+	Uint16 body2mass
+)
 {
-	Vector2_t velocity = vector2Difference(
-		playerObject.position,
-		mainPlanetObject.position
+	Vector2_t difference = vector2Sub(
+		body2position,
+		body1position
 	);
+
+	float distance = vector2Distance(
+		body1position,
+		body2position
+	);
+
+	Vector2_t gravityForce = vector2Mul(
+		vector2Normalized(difference),
+		(Vector2_t) {
+			GRAVITATIONAL_CONSTANT * body1mass * body2mass / (distance * distance),
+			GRAVITATIONAL_CONSTANT * body1mass * body2mass / (distance * distance)
+		}
+	);
+
+	gravityForce.x /= body1mass;
+	gravityForce.y /= body1mass;
+
+	return gravityForce;
+}
+
+static void doFuckingGravity(void)
+{
+	static Vector2_t shipVelocity;
 
 	if (playerObject.engine)
 	{
-		velocity.x += playerObject.forward.x * 1000;
-		velocity.y += playerObject.forward.y * 1000;
+		Vector2_t engineImpulse = (Vector2_t) {
+			playerObject.forward.x / 100,
+			playerObject.forward.y / 100
+		};
+
+		shipVelocity = vector2Sub(
+			shipVelocity,
+			engineImpulse
+		);
 	}
 
-	velocity = vector2Normalized(velocity);
+	Planet_t closestPlanet = mainPlanetObject;
 
-	float distanceToClosestPlanet = vector2Distance(
+	shipVelocity = vector2Sum(
+		shipVelocity,
+		gimmeThatBadBoyGravity(
+			playerObject.position,
+			playerObject.mass,
+			closestPlanet.position,
+			closestPlanet.mass
+		)
+	);
+
+	playerObject.position = vector2Sum(
 		playerObject.position,
-		mainPlanetObject.position
+		shipVelocity
 	);
-
-	float gravityForce = gimmeThatBadBoyGravity(
-		GRAVITATIONAL_CONSTANT,
-		playerObject.mass,
-		mainPlanetObject.mass,
-		distanceToClosestPlanet
-	);
-
-	if ((int)distanceToClosestPlanet != 0)
-	{
-		playerObject.position.x -= velocity.x * gravityForce;
-		playerObject.position.y -= velocity.y * gravityForce;
-	}
 
 	return;
 }
@@ -246,7 +278,7 @@ static void doFunckingGravity(void)
 static void update(void)
 {
 	updatePlayerDirection();
-	doFunckingGravity();
+	doFuckingGravity();
 
 	return;
 }
