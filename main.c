@@ -88,6 +88,9 @@ int main(int argc, char* argv[]) {
 
 	bool running = true;
 
+	playerObject.forward.x = cos(playerObject.angle);
+	playerObject.forward.y = sin(playerObject.angle);
+
 	while (running) {
 		static Uint32 frameStart;
 		frameStart = SDL_GetTicks();
@@ -163,10 +166,10 @@ void update(void) {
 
 			if (playerObject.angle > 2 * PI)
 				playerObject.angle = 0;
-
+		
 			playerObject.forward.x = cos(playerObject.angle);
 			playerObject.forward.y = sin(playerObject.angle);
-			
+
 			break;
 		}
 	}
@@ -184,7 +187,7 @@ void update(void) {
 			mainPlanetObject.position
 		);
 
-		float gravityForce = calculateGravity(
+		float gravityForce = gimmeThatBadBoyGravity(
 			GRAVITATIONAL_CONSTANT,
 			playerObject.mass,
 			mainPlanetObject.mass,
