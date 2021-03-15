@@ -3,3 +3,5 @@ make.bat
 
 # Output
 bin/*
+*.exe
+*.dll

@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 
 	gameState = (GameState_t)MENU;
 
-	SDL_Texture* p_menuTexture = loadTexture("../assets/menu.bmp", p_gameRenderer);
+	SDL_Texture* p_menuTexture = loadTexture("assets/menu.bmp", p_gameRenderer);
 
 	while (running)
 	{
