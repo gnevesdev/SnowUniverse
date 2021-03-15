@@ -59,7 +59,7 @@ static Spaceship_t playerObject = {
 SDL_Point* possibleOrbitPoints;
 
 static void handleEvents(bool* p_runningCondition);
-static void update(void);
+static void update(SDL_Window* p_window);
 static void render(SDL_Renderer* p_renderer);
 
 int main(int argc, char* argv[])
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 		SDL_WINDOWPOS_CENTERED,
 		SCREEN_WIDTH,
 		SCREEN_HEIGHT,
-		(int)NULL
+		/*(int)NULL*/ SDL_WINDOW_RESIZABLE
 	);
 
 	if (!p_gameWindow)
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 		frameStart = SDL_GetTicks();
 
 		handleEvents(&running);
-		update();
+		update(p_gameWindow);
 		render(p_gameRenderer);
 
 		static Uint32 deltaTime;
@@ -351,8 +351,27 @@ static void updatePlayerOrbitPredictionEachXFrames(
 	return;
 }
 
-static void update(void)
+static void updateSunPositionWhenResizing(SDL_Window* p_window)
 {
+	Vector2_t screenArea;
+	int screenWidth;
+	int screenHeight;
+	
+	SDL_GetWindowSize(
+		p_window,
+		&screenWidth,
+		&screenHeight
+	);
+
+	mainPlanetObject.position = (Vector2_t) {
+		screenWidth / 2,
+		screenHeight / 2
+	};
+}
+
+static void update(SDL_Window* p_window)
+{
+	updateSunPositionWhenResizing(p_window);
 	updatePlayerDirection();
 	updatePlayerOrbitPredictionEachXFrames(
 		doFuckingGravity()
