@@ -5,10 +5,20 @@
 #include "vecmath.h"
 #include "primitives.h"
 #include <math.h>
+#include "textures.h"
 
 /* TODO
 - Add support for game controller in the future
+- Try adding glow effect to the sun
+- Make a main menu
+- Make a sprite for that fucking square spaceship
 */
+
+typedef enum GameState
+{
+	MENU,
+	GAME
+} GameState_t;
 
 typedef enum Direction
 {
@@ -31,6 +41,7 @@ typedef struct Spaceship
 	float angle;
 	Direction_t direction;
 	bool engine;
+	Vector2_t velocity;
 } Spaceship_t;
 
 #define FPS 60
@@ -39,6 +50,8 @@ typedef struct Spaceship
 #define SCREEN_HEIGHT 720
 
 #define FRAMES_BETWEEN_ORBIT_PREDICTION 2
+
+static GameState_t gameState;
 
 static Planet_t mainPlanetObject = {
 	{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
@@ -56,11 +69,11 @@ static Spaceship_t playerObject = {
 	false
 };
 
-SDL_Point* possibleOrbitPoints;
+static SDL_Point* possibleOrbitPoints;
 
 static void handleEvents(bool* p_runningCondition);
 static void update(SDL_Window* p_window);
-static void render(SDL_Renderer* p_renderer);
+static void render(SDL_Renderer* p_renderer, SDL_Texture* p_menuTexture);
 
 int main(int argc, char* argv[])
 {
@@ -108,6 +121,10 @@ int main(int argc, char* argv[])
 	playerObject.forward.x = cos(playerObject.angle);
 	playerObject.forward.y = sin(playerObject.angle);
 
+	gameState = (GameState_t)MENU;
+
+	SDL_Texture* p_menuTexture = loadTexture("../assets/menu.bmp", p_gameRenderer);
+
 	while (running)
 	{
 		static Uint32 frameStart;
@@ -115,7 +132,7 @@ int main(int argc, char* argv[])
 
 		handleEvents(&running);
 		update(p_gameWindow);
-		render(p_gameRenderer);
+		render(p_gameRenderer, p_menuTexture);
 
 		static Uint32 deltaTime;
 		deltaTime = SDL_GetTicks() - frameStart;
@@ -124,6 +141,8 @@ int main(int argc, char* argv[])
 			SDL_Delay(1000 / FPS - deltaTime);
 	}
 
+	SDL_DestroyTexture(p_menuTexture);
+	p_menuTexture = NULL;
 	SDL_DestroyRenderer(p_gameRenderer);
 	p_gameRenderer = NULL;
 	SDL_DestroyWindow(p_gameWindow);
@@ -156,7 +175,13 @@ static void handleEvents(bool* p_runningCondition)
 				break;
 					
 			case SDLK_SPACE:
-				playerObject.engine = true;
+				if (gameState == (GameState_t)GAME)
+					playerObject.engine = true;
+				break;
+
+			case SDLK_RETURN:
+				if (gameState != (GameState_t)GAME)
+					gameState = (GameState_t)GAME;
 				break;
 			}
 			break;
@@ -246,8 +271,6 @@ static Vector2_t gimmeThatBadBoyGravity(
 
 static Vector2_t doFuckingGravity(void)
 {
-	static Vector2_t shipVelocity;
-
 	if (playerObject.engine)
 	{
 		Vector2_t engineImpulse = (Vector2_t) {
@@ -255,16 +278,16 @@ static Vector2_t doFuckingGravity(void)
 			playerObject.forward.y / 100
 		};
 
-		shipVelocity = vector2Sub(
-			shipVelocity,
+		playerObject.velocity = vector2Sub(
+			playerObject.velocity,
 			engineImpulse
 		);
 	}
 
 	Planet_t closestPlanet = mainPlanetObject;
 
-	shipVelocity = vector2Sum(
-		shipVelocity,
+	playerObject.velocity = vector2Sum(
+		playerObject.velocity,
 		gimmeThatBadBoyGravity(
 			playerObject.position,
 			playerObject.mass,
@@ -275,10 +298,10 @@ static Vector2_t doFuckingGravity(void)
 
 	playerObject.position = vector2Sum(
 		playerObject.position,
-		shipVelocity
+		playerObject.velocity
 	);
 
-	return shipVelocity;
+	return playerObject.velocity;
 }
 
 static void predictOrbit(
@@ -369,13 +392,38 @@ static void updateSunPositionWhenResizing(SDL_Window* p_window)
 	};
 }
 
+bool checkCollisionWithSun(void)
+{
+	float distanceToSun = vector2Distance(
+		playerObject.position,
+		mainPlanetObject.position
+	);
+
+	if (distanceToSun <= mainPlanetObject.radius)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 static void update(SDL_Window* p_window)
 {
+	if (gameState != (GameState_t)GAME) return;
+
 	updateSunPositionWhenResizing(p_window);
 	updatePlayerDirection();
 	updatePlayerOrbitPredictionEachXFrames(
 		doFuckingGravity()
 	);
+	
+	if (checkCollisionWithSun())
+	{
+		gameState = (GameState_t)MENU;
+		
+		playerObject.position = (Vector2_t) {80.f, 80.f};
+		playerObject.velocity = (Vector2_t) {0.f, 0.f};
+	}
 
 	return;
 }
@@ -426,15 +474,47 @@ static void drawOrbitPrediction(SDL_Renderer* p_renderer)
 	return;
 }
 
-static void render(SDL_Renderer* p_renderer)
+static void renderMenu(SDL_Renderer* p_renderer, SDL_Texture* p_menuTexture)
+{
+	static Uint8 timer;
+	bool drawPhrase = false;
+
+	if (timer < 30)
+	{
+		++timer;
+	}
+	else
+	{
+		drawPhrase = !drawPhrase;
+	}
+
+	if (!drawPhrase) return;
+
+	SDL_SetRenderDrawColor(p_renderer, 255, 255, 255, 255);
+	SDL_RenderCopy(p_renderer, p_menuTexture, NULL, NULL);
+
+	return;
+}
+
+static void render(
+	SDL_Renderer* p_renderer,
+	SDL_Texture* p_menuTexture
+)
 {
 	SDL_SetRenderDrawColor(p_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(p_renderer);
+
+	if (gameState != (GameState_t)GAME)
+	{
+		renderMenu(p_renderer, p_menuTexture);
+		goto presentGraphics;
+	}
 
 	renderPlanets(p_renderer);
 	renderPlayer(p_renderer);
 	drawOrbitPrediction(p_renderer);
 
+	presentGraphics:
 	SDL_RenderPresent(p_renderer);
 
 	return;
