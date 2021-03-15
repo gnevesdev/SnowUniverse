@@ -35,8 +35,8 @@ typedef struct Spaceship
 
 #define FPS 60
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 600
+#define SCREEN_WIDTH 1200
+#define SCREEN_HEIGHT 720
 
 #define FRAMES_BETWEEN_ORBIT_PREDICTION 2
 
@@ -368,7 +368,7 @@ static void renderPlanets(SDL_Renderer* p_renderer)
 		(int)mainPlanetObject.position.x,
 		(int)mainPlanetObject.position.y,
 		mainPlanetObject.radius,
-		45, 62, 30,
+		255, 215, 100,
 		255
 	);
 
