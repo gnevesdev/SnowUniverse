@@ -38,6 +38,8 @@ typedef struct Spaceship
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
+#define FRAMES_BETWEEN_ORBIT_PREDICTION 2
+
 static Planet_t mainPlanetObject = {
 	{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
 	80,
@@ -53,6 +55,8 @@ static Spaceship_t playerObject = {
 	(Direction_t)NULLDIR,
 	false
 };
+
+SDL_Point* possibleOrbitPoints;
 
 static void handleEvents(bool* p_runningCondition);
 static void update(void);
@@ -98,6 +102,8 @@ int main(int argc, char* argv[])
 	}
 
 	bool running = true;
+
+	possibleOrbitPoints = (SDL_Point*)malloc(1000 * sizeof(SDL_Point));
 
 	playerObject.forward.x = cos(playerObject.angle);
 	playerObject.forward.y = sin(playerObject.angle);
@@ -238,7 +244,7 @@ static Vector2_t gimmeThatBadBoyGravity(
 	return gravityForce;
 }
 
-static void doFuckingGravity(void)
+static Vector2_t doFuckingGravity(void)
 {
 	static Vector2_t shipVelocity;
 
@@ -272,13 +278,85 @@ static void doFuckingGravity(void)
 		shipVelocity
 	);
 
+	return shipVelocity;
+}
+
+static void predictOrbit(
+	Vector2_t objectPosition,
+	Vector2_t objectVelocity,
+	Uint16 objectMass,
+	Vector2_t attractorPosition,
+	Uint16 attractorMass,
+	Uint16 steps
+)
+{
+	objectVelocity = vector2Mul(
+		objectVelocity,
+		(Vector2_t) {2, 2}
+	);
+
+	for (Uint16 i = 0; i < steps; ++i)
+	{
+		possibleOrbitPoints[i] = (SDL_Point) {
+			objectPosition.x,
+			objectPosition.y
+		};
+
+		objectVelocity = vector2Sum(
+			objectVelocity,
+			vector2Mul(
+				gimmeThatBadBoyGravity(
+					objectPosition,
+					objectMass,
+					attractorPosition,
+					attractorMass
+				),
+				(Vector2_t) {4, 4}
+			)
+		);
+
+		objectPosition = vector2Sum(
+			objectPosition,
+			objectVelocity
+		);
+	}
+
+	return;
+}
+
+static void updatePlayerOrbitPredictionEachXFrames(
+	Vector2_t playerVelocity
+)
+{
+	static Uint8 timer = FRAMES_BETWEEN_ORBIT_PREDICTION;
+
+	if (timer > 0)
+	{
+		--timer;
+	}
+	else if (timer <= 0)
+	{
+		predictOrbit(
+			playerObject.position,
+			playerVelocity,
+			playerObject.mass,
+			mainPlanetObject.position,
+			mainPlanetObject.mass,
+			1000
+		);
+
+		timer = FRAMES_BETWEEN_ORBIT_PREDICTION;
+	}
+
 	return;
 }
 
 static void update(void)
 {
 	updatePlayerDirection();
-	doFuckingGravity();
+	updatePlayerOrbitPredictionEachXFrames(
+		doFuckingGravity()
+	);
 
 	return;
 }
@@ -321,6 +399,14 @@ static void renderPlayer(SDL_Renderer* p_renderer)
 	return;
 }
 
+static void drawOrbitPrediction(SDL_Renderer* p_renderer)
+{
+	SDL_SetRenderDrawColor(p_renderer, 0, 255, 0, 255);
+	SDL_RenderDrawLines(p_renderer, possibleOrbitPoints, 1000);
+
+	return;
+}
+
 static void render(SDL_Renderer* p_renderer)
 {
 	SDL_SetRenderDrawColor(p_renderer, 0, 0, 0, 255);
@@ -328,6 +414,7 @@ static void render(SDL_Renderer* p_renderer)
 
 	renderPlanets(p_renderer);
 	renderPlayer(p_renderer);
+	drawOrbitPrediction(p_renderer);
 
 	SDL_RenderPresent(p_renderer);
 
