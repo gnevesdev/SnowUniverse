@@ -10,7 +10,6 @@
 /* TODO
 - Add support for game controller in the future
 - Try adding glow effect to the sun
-- Make a main menu
 - Make a sprite for that fucking square spaceship
 */
 
@@ -511,8 +510,8 @@ static void render(
 	}
 
 	renderPlanets(p_renderer);
-	renderPlayer(p_renderer);
 	drawOrbitPrediction(p_renderer);
+	renderPlayer(p_renderer);
 
 	presentGraphics:
 	SDL_RenderPresent(p_renderer);
