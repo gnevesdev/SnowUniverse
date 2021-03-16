@@ -375,7 +375,6 @@ static void updatePlayerOrbitPredictionEachXFrames(
 
 static void updateSunPositionWhenResizing(SDL_Window* p_window)
 {
-	Vector2_t screenArea;
 	int screenWidth;
 	int screenHeight;
 	
@@ -406,6 +405,38 @@ bool checkCollisionWithSun(void)
 	return false;
 }
 
+static bool isOutOfScreen(SDL_Window* p_window, Vector2_t position)
+{
+	int screenWidth;
+	int screenHeight;
+	
+	SDL_GetWindowSize(
+		p_window,
+		&screenWidth,
+		&screenHeight
+	);
+
+	if (
+		position.x < 0
+		|| position.x > screenWidth
+		|| position.y < 0
+		|| position.y > screenHeight
+	)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+static void playerDie(void)
+{
+	gameState = (GameState_t)MENU;
+		
+	playerObject.position = (Vector2_t) {80.f, 80.f};
+	playerObject.velocity = (Vector2_t) {0.f, 0.f};
+}
+
 static void update(SDL_Window* p_window)
 {
 	if (gameState != (GameState_t)GAME) return;
@@ -416,12 +447,12 @@ static void update(SDL_Window* p_window)
 		doFuckingGravity()
 	);
 	
-	if (checkCollisionWithSun())
+	if (
+		checkCollisionWithSun()
+		|| isOutOfScreen(p_window, playerObject.position)
+	)
 	{
-		gameState = (GameState_t)MENU;
-		
-		playerObject.position = (Vector2_t) {80.f, 80.f};
-		playerObject.velocity = (Vector2_t) {0.f, 0.f};
+		playerDie();
 	}
 
 	return;
