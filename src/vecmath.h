@@ -5,34 +5,16 @@
 
 #define PI 3.1416
 
-typedef struct Vector2
+typedef struct
 {
 	float x;
 	float y;
-} Vector2_t;
+} vector2_t;
 
-Vector2_t vector2Sub(
-	Vector2_t vec1,
-	Vector2_t vec2
-);
-
-Vector2_t vector2Sum(
-	Vector2_t vec1,
-	Vector2_t vec2
-);
-
-Vector2_t vector2Mul(
-	Vector2_t vec1,
-	Vector2_t vec2
-);
-
-float vector2Distance(
-	Vector2_t vec1,
-	Vector2_t vec2
-);
-
-Vector2_t vector2Normalized(
-	Vector2_t vector
-);
+vector2_t vector2_sub(vector2_t vec1, vector2_t vec2);
+vector2_t vector2_sum(vector2_t vec1, vector2_t vec2);
+vector2_t vector2_mul(vector2_t vec1, vector2_t vec2);
+float vector2_distance(vector2_t vec1, vector2_t vec2);
+vector2_t vector2_normalized(vector2_t vector);
 
 #endif

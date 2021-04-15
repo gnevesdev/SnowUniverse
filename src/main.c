@@ -38,20 +38,20 @@ typedef enum
 
 typedef struct
 {
-	Vector2_t position;
+	vector2_t position;
 	uint8_t radius;
 	unsigned int mass;
 } space_body_t;
 
 typedef struct
 {
-	Vector2_t position;
+	vector2_t position;
 	uint8_t size;
 	unsigned int mass;
 	direction_t direction;
 	float angle;
-	Vector2_t velocity;
-	Vector2_t forward;
+	vector2_t velocity;
+	vector2_t forward;
 	bool engine;
 } spaceship_t;
 
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 
 	game_state = (game_state_t)GAME_STATE_MENU;
 
-	SDL_Texture* p_menu_texture = loadTexture("assets/menu.bmp", p_game_renderer);
+	SDL_Texture* p_menu_texture = load_texture("assets/menu.bmp", p_game_renderer);
 
 	while (running)
 	{
@@ -213,11 +213,11 @@ static void update_player_direction(void)
 	return;
 }
 
-static Vector2_t gimme_that_bad_boy_gravity(Vector2_t body1_position, int body1_mass, Vector2_t body2_position, int body2_mass)
+static vector2_t gimme_that_bad_boy_gravity(vector2_t body1_position, int body1_mass, vector2_t body2_position, int body2_mass)
 {
-	Vector2_t difference = vector2Sub(body2_position, body1_position);
-	float distance = vector2Distance(body1_position, body2_position);
-	Vector2_t gravity_force = vector2Mul(vector2Normalized(difference), (Vector2_t) { GRAVITATIONAL_CONSTANT * body1_mass * body2_mass / (distance * distance), GRAVITATIONAL_CONSTANT * body1_mass * body2_mass / (distance * distance) });
+	vector2_t difference = vector2_sub(body2_position, body1_position);
+	float distance = vector2_distance(body1_position, body2_position);
+	vector2_t gravity_force = vector2_mul(vector2_normalized(difference), (vector2_t) { GRAVITATIONAL_CONSTANT * body1_mass * body2_mass / (distance * distance), GRAVITATIONAL_CONSTANT * body1_mass * body2_mass / (distance * distance) });
 
 	gravity_force.x /= body1_mass;
 	gravity_force.y /= body1_mass;
@@ -225,36 +225,36 @@ static Vector2_t gimme_that_bad_boy_gravity(Vector2_t body1_position, int body1_
 	return gravity_force;
 }
 
-static Vector2_t do_gravity_thing(void)
+static vector2_t do_gravity_thing(void)
 {
 	if (player_object.engine)
 	{
-		Vector2_t engine_impulse = (Vector2_t) { player_object.forward.x / 100, player_object.forward.y / 100 };
+		vector2_t engine_impulse = (vector2_t) { player_object.forward.x / 100, player_object.forward.y / 100 };
 
-		player_object.velocity = vector2Sub(player_object.velocity, engine_impulse);
+		player_object.velocity = vector2_sub(player_object.velocity, engine_impulse);
 	}
 
-	player_object.velocity = vector2Sum(player_object.velocity, gimme_that_bad_boy_gravity(player_object.position, player_object.mass, sun_object.position, sun_object.mass));
-	player_object.position = vector2Sum(player_object.position, player_object.velocity);
+	player_object.velocity = vector2_sum(player_object.velocity, gimme_that_bad_boy_gravity(player_object.position, player_object.mass, sun_object.position, sun_object.mass));
+	player_object.position = vector2_sum(player_object.position, player_object.velocity);
 
 	return player_object.velocity;
 }
 
-static void predict_orbit(Vector2_t object_position, Vector2_t object_velocity, int object_mass, Vector2_t attractor_position, int attractor_mass, int steps)
+static void predict_orbit(vector2_t object_position, vector2_t object_velocity, int object_mass, vector2_t attractor_position, int attractor_mass, int steps)
 {
-	object_velocity = vector2Mul(object_velocity, (Vector2_t) { 2, 2 });
+	object_velocity = vector2_mul(object_velocity, (vector2_t) { 2, 2 });
 
 	for (int i = 0; i < steps; ++i)
 	{
 		orbit_prediction_points[i] = (SDL_Point) { object_position.x, object_position.y };
-		object_velocity = vector2Sum(object_velocity, vector2Mul(gimme_that_bad_boy_gravity(object_position, object_mass, attractor_position, attractor_mass), (Vector2_t) { 4, 4 }));
-		object_position = vector2Sum(object_position, object_velocity);
+		object_velocity = vector2_sum(object_velocity, vector2_mul(gimme_that_bad_boy_gravity(object_position, object_mass, attractor_position, attractor_mass), (vector2_t) { 4, 4 }));
+		object_position = vector2_sum(object_position, object_velocity);
 	}
 
 	return;
 }
 
-static void update_player_orbit_prediction_each_x_frames(Vector2_t player_velocity)
+static void update_player_orbit_prediction_each_x_frames(vector2_t player_velocity)
 {
 	static int timer = FRAMES_BETWEEN_ORBIT_PREDICTION;
 
@@ -279,14 +279,14 @@ static void update_sun_position_when_resizing(SDL_Window* p_window)
 	
 	SDL_GetWindowSize(p_window, &screen_width, &screen_height);
 
-	sun_object.position = (Vector2_t) { screen_width / 2, screen_height / 2 };
+	sun_object.position = (vector2_t) { screen_width / 2, screen_height / 2 };
 
 	return;
 }
 
 static bool check_collision_with_sun(void)
 {
-	float distance_to_sun = vector2Distance(player_object.position, sun_object.position);
+	float distance_to_sun = vector2_distance(player_object.position, sun_object.position);
 
 	if (distance_to_sun <= sun_object.radius)
 	{
@@ -296,7 +296,7 @@ static bool check_collision_with_sun(void)
 	return false;
 }
 
-static bool is_out_of_screen(SDL_Window* p_window, Vector2_t position)
+static bool is_out_of_screen(SDL_Window* p_window, vector2_t position)
 {
 	int screen_width;
 	int screen_height;
@@ -315,8 +315,8 @@ static void player_die(void)
 {
 	game_state = (game_state_t)GAME_STATE_MENU;
 		
-	player_object.position = (Vector2_t) { 80.f, 80.f };
-	player_object.velocity = (Vector2_t) { 0.f, 0.f };
+	player_object.position = (vector2_t) { 80.f, 80.f };
+	player_object.velocity = (vector2_t) { 0.f, 0.f };
 
 	return;
 }
@@ -339,7 +339,7 @@ static void update(SDL_Window* p_window)
 
 static void render_planets(SDL_Renderer* p_renderer)
 {
-	fillCircle(p_renderer, (int)sun_object.position.x, (int)sun_object.position.y, sun_object.radius, 255, 215, 100, 255);
+	fill_circle(p_renderer, (int)sun_object.position.x, (int)sun_object.position.y, sun_object.radius, 255, 215, 100, 255);
 
 	return;
 }
@@ -368,7 +368,7 @@ static void draw_orbit_prediction(SDL_Renderer* p_renderer)
 static void render_menu(SDL_Renderer* p_renderer, SDL_Texture* p_menu_texture)
 {
 	static int timer;
-	bool draw_phrase = false;
+	static bool draw_phrase = false;
 
 	if (timer < 30)
 	{
@@ -377,6 +377,7 @@ static void render_menu(SDL_Renderer* p_renderer, SDL_Texture* p_menu_texture)
 	else
 	{
 		draw_phrase = !draw_phrase;
+		timer = 0;
 	}
 
 	if (!draw_phrase) return;
@@ -392,7 +393,7 @@ static void render(SDL_Renderer* p_renderer, SDL_Texture* p_menu_texture)
 	SDL_SetRenderDrawColor(p_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(p_renderer);
 
-	if (game_state != (game_state_t)GAME_STATE_GAME)
+	if (game_state == (game_state_t)GAME_STATE_MENU)
 	{
 		render_menu(p_renderer, p_menu_texture);
 		goto PRESENT_GRAPHICS;

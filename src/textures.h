@@ -3,9 +3,6 @@
 
 #include <SDL2/SDL.h>
 
-SDL_Texture* loadTexture(
-  const char* path,
-  SDL_Renderer* p_renderer
-);
+SDL_Texture* load_texture(const char* path, SDL_Renderer* p_renderer);
 
 #endif
