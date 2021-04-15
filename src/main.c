@@ -208,6 +208,9 @@ static void update_player_direction(void)
 		player_object.forward.y = sin(player_object.angle);
 
 		break;
+	
+	default:
+		break;
 	}
 
 	return;

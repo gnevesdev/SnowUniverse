@@ -1,7 +1,9 @@
 # makefiles
 make.bat
+make.sh
 
 # Output
 bin/*
 *.exe
 *.dll
+*.out
