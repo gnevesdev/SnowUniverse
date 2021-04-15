@@ -1,47 +1,20 @@
 #include <stdio.h>
-#include <SDL.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
+
+#include <math.h>
+
+#include <SDL2/SDL.h>
+
 #include "vecmath.h"
 #include "primitives.h"
-#include <math.h>
 #include "textures.h"
 
 /* TODO
 - Add support for game controller in the future
-- Try adding glow effect to the sun
-- Make a sprite for that fucking square spaceship
+- Make a sprite for the spaceship
 */
-
-typedef enum GameState
-{
-	MENU,
-	GAME
-} GameState_t;
-
-typedef enum Direction
-{
-	NULLDIR, LEFT, RIGHT
-} Direction_t;
-
-typedef struct Planet
-{
-	Vector2_t position;
-	Uint8 radius;
-	Uint16 mass;
-} Planet_t;
-
-typedef struct Spaceship
-{
-	Vector2_t position;
-	Uint8 size;
-	Uint16 mass;
-	Vector2_t forward;
-	float angle;
-	Direction_t direction;
-	bool engine;
-	Vector2_t velocity;
-} Spaceship_t;
 
 #define FPS 60
 
@@ -50,108 +23,113 @@ typedef struct Spaceship
 
 #define FRAMES_BETWEEN_ORBIT_PREDICTION 2
 
-static GameState_t gameState;
+typedef enum
+{
+	GAME_STATE_MENU,
+	GAME_STATE_GAME
+} game_state_t;
 
-static Planet_t mainPlanetObject = {
-	{SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2},
-	80,
-	2000
-};
+typedef enum
+{
+	DIRECTION_UNDEFINED,
+	DIRECTION_LEFT,
+	DIRECTION_RIGHT
+} direction_t;
 
-static Spaceship_t playerObject = {
-	{80.f, 80.f},
-	16,
-	6000,
-	{.0f, .0f},
-	0,
-	(Direction_t)NULLDIR,
-	false
-};
+typedef struct
+{
+	Vector2_t position;
+	uint8_t radius;
+	unsigned int mass;
+} space_body_t;
 
-static SDL_Point* possibleOrbitPoints;
+typedef struct
+{
+	Vector2_t position;
+	uint8_t size;
+	unsigned int mass;
+	direction_t direction;
+	float angle;
+	Vector2_t velocity;
+	Vector2_t forward;
+	bool engine;
+} spaceship_t;
 
-static void handleEvents(bool* p_runningCondition);
+static game_state_t game_state;
+
+static space_body_t sun_object = { { SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 }, 80, 2000 };
+static spaceship_t player_object = { {80.f, 80.f}, 16, 6000, (direction_t)DIRECTION_UNDEFINED, 0, {.0f, .0f}, {.0f, .0f}, false };
+
+static SDL_Point* orbit_prediction_points;
+
+static void handle_events(bool* p_running_condition);
 static void update(SDL_Window* p_window);
-static void render(SDL_Renderer* p_renderer, SDL_Texture* p_menuTexture);
+static void render(SDL_Renderer* p_renderer, SDL_Texture* p_menu_texture);
 
 int main(int argc, char* argv[])
 {
-	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0)
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != (int)NULL)
 	{
-		printf("ERROR: Unable to initialize SDL!\n");
+		puts("ERROR: Unable to initialize SDL!");
 		exit(EXIT_FAILURE);
 	}
 
-	SDL_Window* p_gameWindow;
+	SDL_Window* p_game_window;
+	p_game_window = SDL_CreateWindow("Snow Universe", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_RESIZABLE);
 
-	p_gameWindow = SDL_CreateWindow(
-		"Snow Universe",
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
-		SCREEN_WIDTH,
-		SCREEN_HEIGHT,
-		/*(int)NULL*/ SDL_WINDOW_RESIZABLE
-	);
-
-	if (!p_gameWindow)
+	if (!p_game_window)
 	{
-		printf("ERROR: Could not create the game window!\n");
+		puts("ERROR: Could not create the game window!");
 		exit(EXIT_FAILURE);
 	}
 
-	SDL_Renderer* p_gameRenderer;
+	SDL_Renderer* p_game_renderer;
+	p_game_renderer = SDL_CreateRenderer(p_game_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
-	p_gameRenderer = SDL_CreateRenderer(
-		p_gameWindow,
-		-1,
-		SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC
-	);
-
-	if (!p_gameRenderer)
+	if (!p_game_renderer)
 	{
-		printf("ERROR: Could not create a proper renderer!\n");
+		puts("ERROR: Could not create a proper renderer!");
 		exit(EXIT_FAILURE);
 	}
 
 	bool running = true;
 
-	possibleOrbitPoints = (SDL_Point*)malloc(1000 * sizeof(SDL_Point));
+	orbit_prediction_points = (SDL_Point*)malloc(1000 * sizeof(SDL_Point));
 
-	playerObject.forward.x = cos(playerObject.angle);
-	playerObject.forward.y = sin(playerObject.angle);
+	player_object.forward.x = cos(player_object.angle);
+	player_object.forward.y = sin(player_object.angle);
 
-	gameState = (GameState_t)MENU;
+	game_state = (game_state_t)GAME_STATE_MENU;
 
-	SDL_Texture* p_menuTexture = loadTexture("assets/menu.bmp", p_gameRenderer);
+	SDL_Texture* p_menu_texture = loadTexture("assets/menu.bmp", p_game_renderer);
 
 	while (running)
 	{
-		static Uint32 frameStart;
-		frameStart = SDL_GetTicks();
+		static int frame_start;
+		frame_start = SDL_GetTicks();
 
-		handleEvents(&running);
-		update(p_gameWindow);
-		render(p_gameRenderer, p_menuTexture);
+		handle_events(&running);
+		update(p_game_window);
+		render(p_game_renderer, p_menu_texture);
 
-		static Uint32 deltaTime;
-		deltaTime = SDL_GetTicks() - frameStart;
+		static int delta_time;
+		delta_time = SDL_GetTicks() - frame_start;
 
-		if (deltaTime < 1000 / FPS)
-			SDL_Delay(1000 / FPS - deltaTime);
+		if (delta_time < 1000 / FPS) SDL_Delay(1000 / FPS - delta_time);
 	}
 
-	SDL_DestroyTexture(p_menuTexture);
-	p_menuTexture = NULL;
-	SDL_DestroyRenderer(p_gameRenderer);
-	p_gameRenderer = NULL;
-	SDL_DestroyWindow(p_gameWindow);
-	p_gameWindow = NULL;
+	SDL_DestroyTexture(p_menu_texture);
+	p_menu_texture = NULL;
+	SDL_DestroyRenderer(p_game_renderer);
+	p_game_renderer = NULL;
+	SDL_DestroyWindow(p_game_window);
+	p_game_window = NULL;
 	SDL_Quit();
 
 	return 0;
 }
 
-static void handleEvents(bool* p_runningCondition)
+static void handle_events(bool* p_running_condition)
 {
 	SDL_Event event;
 	while (SDL_PollEvent(&event))
@@ -159,28 +137,28 @@ static void handleEvents(bool* p_runningCondition)
 		switch (event.type)
 		{
 		case SDL_QUIT:
-			*p_runningCondition = false;
+			*p_running_condition = false;
 			break;
 
 		case SDL_KEYDOWN:
 			switch (event.key.keysym.sym)
 			{
 			case SDLK_a:
-				playerObject.direction = (Direction_t)LEFT;
+				player_object.direction = (direction_t)DIRECTION_LEFT;
 				break;
 
 			case SDLK_d:
-				playerObject.direction = (Direction_t)RIGHT;
+				player_object.direction = (direction_t)DIRECTION_RIGHT;
 				break;
 					
 			case SDLK_SPACE:
-				if (gameState == (GameState_t)GAME)
-					playerObject.engine = true;
+				if (game_state == (game_state_t)GAME_STATE_GAME)
+					player_object.engine = true;
 				break;
 
 			case SDLK_RETURN:
-				if (gameState != (GameState_t)GAME)
-					gameState = (GameState_t)GAME;
+				if (game_state != (game_state_t)GAME_STATE_GAME)
+					game_state = (game_state_t)GAME_STATE_GAME;
 				break;
 			}
 			break;
@@ -189,15 +167,15 @@ static void handleEvents(bool* p_runningCondition)
 			switch (event.key.keysym.sym)
 			{
 			case SDLK_a:
-				playerObject.direction = (Direction_t)NULLDIR;
+				player_object.direction = (direction_t)DIRECTION_UNDEFINED;
 				break;
 
 			case SDLK_d:
-				playerObject.direction = (Direction_t)NULLDIR;
+				player_object.direction = (direction_t)DIRECTION_UNDEFINED;
 				break;
 					
 			case SDLK_SPACE:
-				playerObject.engine = false;
+				player_object.engine = false;
 				break;
 			}
 			break;
@@ -207,29 +185,27 @@ static void handleEvents(bool* p_runningCondition)
 	return;
 }
 
-static void updatePlayerDirection(void)
+static void update_player_direction(void)
 {
-	switch (playerObject.direction)
+	switch (player_object.direction)
 	{
-	case (Direction_t)LEFT:
-		playerObject.angle -= .1f;
+	case (direction_t)DIRECTION_LEFT:
+		player_object.angle -= .1f;
 
-		if (playerObject.angle < 0)
-			playerObject.angle = 2 * PI;
+		if (player_object.angle < 0) player_object.angle = 2 * PI;
 
-		playerObject.forward.x = cos(playerObject.angle);
-		playerObject.forward.y = sin(playerObject.angle);
+		player_object.forward.x = cos(player_object.angle);
+		player_object.forward.y = sin(player_object.angle);
 
 		break;
 
-	case (Direction_t)RIGHT:
-		playerObject.angle += .1f;
+	case (direction_t)DIRECTION_RIGHT:
+		player_object.angle += .1f;
 
-		if (playerObject.angle > 2 * PI)
-			playerObject.angle = 0;
+		if (player_object.angle > 2 * PI) player_object.angle = 0;
 
-		playerObject.forward.x = cos(playerObject.angle);
-		playerObject.forward.y = sin(playerObject.angle);
+		player_object.forward.x = cos(player_object.angle);
+		player_object.forward.y = sin(player_object.angle);
 
 		break;
 	}
@@ -237,120 +213,50 @@ static void updatePlayerDirection(void)
 	return;
 }
 
-static Vector2_t gimmeThatBadBoyGravity(
-	Vector2_t body1position,
-	Uint16 body1mass,
-	Vector2_t body2position,
-	Uint16 body2mass
-)
+static Vector2_t gimme_that_bad_boy_gravity(Vector2_t body1_position, int body1_mass, Vector2_t body2_position, int body2_mass)
 {
-	Vector2_t difference = vector2Sub(
-		body2position,
-		body1position
-	);
+	Vector2_t difference = vector2Sub(body2_position, body1_position);
+	float distance = vector2Distance(body1_position, body2_position);
+	Vector2_t gravity_force = vector2Mul(vector2Normalized(difference), (Vector2_t) { GRAVITATIONAL_CONSTANT * body1_mass * body2_mass / (distance * distance), GRAVITATIONAL_CONSTANT * body1_mass * body2_mass / (distance * distance) });
 
-	float distance = vector2Distance(
-		body1position,
-		body2position
-	);
+	gravity_force.x /= body1_mass;
+	gravity_force.y /= body1_mass;
 
-	Vector2_t gravityForce = vector2Mul(
-		vector2Normalized(difference),
-		(Vector2_t) {
-			GRAVITATIONAL_CONSTANT * body1mass * body2mass / (distance * distance),
-			GRAVITATIONAL_CONSTANT * body1mass * body2mass / (distance * distance)
-		}
-	);
-
-	gravityForce.x /= body1mass;
-	gravityForce.y /= body1mass;
-
-	return gravityForce;
+	return gravity_force;
 }
 
-static Vector2_t doFuckingGravity(void)
+static Vector2_t do_gravity_thing(void)
 {
-	if (playerObject.engine)
+	if (player_object.engine)
 	{
-		Vector2_t engineImpulse = (Vector2_t) {
-			playerObject.forward.x / 100,
-			playerObject.forward.y / 100
-		};
+		Vector2_t engine_impulse = (Vector2_t) { player_object.forward.x / 100, player_object.forward.y / 100 };
 
-		playerObject.velocity = vector2Sub(
-			playerObject.velocity,
-			engineImpulse
-		);
+		player_object.velocity = vector2Sub(player_object.velocity, engine_impulse);
 	}
 
-	Planet_t closestPlanet = mainPlanetObject;
+	player_object.velocity = vector2Sum(player_object.velocity, gimme_that_bad_boy_gravity(player_object.position, player_object.mass, sun_object.position, sun_object.mass));
+	player_object.position = vector2Sum(player_object.position, player_object.velocity);
 
-	playerObject.velocity = vector2Sum(
-		playerObject.velocity,
-		gimmeThatBadBoyGravity(
-			playerObject.position,
-			playerObject.mass,
-			closestPlanet.position,
-			closestPlanet.mass
-		)
-	);
-
-	playerObject.position = vector2Sum(
-		playerObject.position,
-		playerObject.velocity
-	);
-
-	return playerObject.velocity;
+	return player_object.velocity;
 }
 
-static void predictOrbit(
-	Vector2_t objectPosition,
-	Vector2_t objectVelocity,
-	Uint16 objectMass,
-	Vector2_t attractorPosition,
-	Uint16 attractorMass,
-	Uint16 steps
-)
+static void predict_orbit(Vector2_t object_position, Vector2_t object_velocity, int object_mass, Vector2_t attractor_position, int attractor_mass, int steps)
 {
-	objectVelocity = vector2Mul(
-		objectVelocity,
-		(Vector2_t) {2, 2}
-	);
+	object_velocity = vector2Mul(object_velocity, (Vector2_t) { 2, 2 });
 
-	for (Uint16 i = 0; i < steps; ++i)
+	for (int i = 0; i < steps; ++i)
 	{
-		possibleOrbitPoints[i] = (SDL_Point) {
-			objectPosition.x,
-			objectPosition.y
-		};
-
-		objectVelocity = vector2Sum(
-			objectVelocity,
-			vector2Mul(
-				gimmeThatBadBoyGravity(
-					objectPosition,
-					objectMass,
-					attractorPosition,
-					attractorMass
-				),
-				(Vector2_t) {4, 4}
-			)
-		);
-
-		objectPosition = vector2Sum(
-			objectPosition,
-			objectVelocity
-		);
+		orbit_prediction_points[i] = (SDL_Point) { object_position.x, object_position.y };
+		object_velocity = vector2Sum(object_velocity, vector2Mul(gimme_that_bad_boy_gravity(object_position, object_mass, attractor_position, attractor_mass), (Vector2_t) { 4, 4 }));
+		object_position = vector2Sum(object_position, object_velocity);
 	}
 
 	return;
 }
 
-static void updatePlayerOrbitPredictionEachXFrames(
-	Vector2_t playerVelocity
-)
+static void update_player_orbit_prediction_each_x_frames(Vector2_t player_velocity)
 {
-	static Uint8 timer = FRAMES_BETWEEN_ORBIT_PREDICTION;
+	static int timer = FRAMES_BETWEEN_ORBIT_PREDICTION;
 
 	if (timer > 0)
 	{
@@ -358,14 +264,7 @@ static void updatePlayerOrbitPredictionEachXFrames(
 	}
 	else if (timer <= 0)
 	{
-		predictOrbit(
-			playerObject.position,
-			playerVelocity,
-			playerObject.mass,
-			mainPlanetObject.position,
-			mainPlanetObject.mass,
-			1000
-		);
+		predict_orbit(player_object.position, player_velocity, player_object.mass, sun_object.position, sun_object.mass, 1000);
 
 		timer = FRAMES_BETWEEN_ORBIT_PREDICTION;
 	}
@@ -373,31 +272,23 @@ static void updatePlayerOrbitPredictionEachXFrames(
 	return;
 }
 
-static void updateSunPositionWhenResizing(SDL_Window* p_window)
+static void update_sun_position_when_resizing(SDL_Window* p_window)
 {
-	int screenWidth;
-	int screenHeight;
+	int screen_width;
+	int screen_height;
 	
-	SDL_GetWindowSize(
-		p_window,
-		&screenWidth,
-		&screenHeight
-	);
+	SDL_GetWindowSize(p_window, &screen_width, &screen_height);
 
-	mainPlanetObject.position = (Vector2_t) {
-		screenWidth / 2,
-		screenHeight / 2
-	};
+	sun_object.position = (Vector2_t) { screen_width / 2, screen_height / 2 };
+
+	return;
 }
 
-bool checkCollisionWithSun(void)
+static bool check_collision_with_sun(void)
 {
-	float distanceToSun = vector2Distance(
-		playerObject.position,
-		mainPlanetObject.position
-	);
+	float distance_to_sun = vector2Distance(player_object.position, sun_object.position);
 
-	if (distanceToSun <= mainPlanetObject.radius)
+	if (distance_to_sun <= sun_object.radius)
 	{
 		return true;
 	}
@@ -405,23 +296,14 @@ bool checkCollisionWithSun(void)
 	return false;
 }
 
-static bool isOutOfScreen(SDL_Window* p_window, Vector2_t position)
+static bool is_out_of_screen(SDL_Window* p_window, Vector2_t position)
 {
-	int screenWidth;
-	int screenHeight;
+	int screen_width;
+	int screen_height;
 	
-	SDL_GetWindowSize(
-		p_window,
-		&screenWidth,
-		&screenHeight
-	);
+	SDL_GetWindowSize(p_window, &screen_width, &screen_height);
 
-	if (
-		position.x < 0
-		|| position.x > screenWidth
-		|| position.y < 0
-		|| position.y > screenHeight
-	)
+	if (position.x < 0 || position.x > screen_width || position.y < 0 || position.y > screen_height)
 	{
 		return true;
 	}
@@ -429,85 +311,64 @@ static bool isOutOfScreen(SDL_Window* p_window, Vector2_t position)
 	return false;
 }
 
-static void playerDie(void)
+static void player_die(void)
 {
-	gameState = (GameState_t)MENU;
+	game_state = (game_state_t)GAME_STATE_MENU;
 		
-	playerObject.position = (Vector2_t) {80.f, 80.f};
-	playerObject.velocity = (Vector2_t) {0.f, 0.f};
+	player_object.position = (Vector2_t) { 80.f, 80.f };
+	player_object.velocity = (Vector2_t) { 0.f, 0.f };
+
+	return;
 }
 
 static void update(SDL_Window* p_window)
 {
-	if (gameState != (GameState_t)GAME) return;
+	if (game_state != (game_state_t)GAME_STATE_GAME) return;
 
-	updateSunPositionWhenResizing(p_window);
-	updatePlayerDirection();
-	updatePlayerOrbitPredictionEachXFrames(
-		doFuckingGravity()
-	);
+	update_sun_position_when_resizing(p_window);
+	update_player_direction();
+	update_player_orbit_prediction_each_x_frames(do_gravity_thing());
 	
-	if (
-		checkCollisionWithSun()
-		|| isOutOfScreen(p_window, playerObject.position)
-	)
+	if (check_collision_with_sun() || is_out_of_screen(p_window, player_object.position))
 	{
-		playerDie();
+		player_die();
 	}
 
 	return;
 }
 
-static void renderPlanets(SDL_Renderer* p_renderer)
+static void render_planets(SDL_Renderer* p_renderer)
 {
-	fillCircle(
-		p_renderer,
-		(int)mainPlanetObject.position.x,
-		(int)mainPlanetObject.position.y,
-		mainPlanetObject.radius,
-		255, 215, 100,
-		255
-	);
+	fillCircle(p_renderer, (int)sun_object.position.x, (int)sun_object.position.y, sun_object.radius, 255, 215, 100, 255);
 
 	return;
 }
 
-static void renderPlayer(SDL_Renderer* p_renderer)
+static void render_player(SDL_Renderer* p_renderer)
 {
-	SDL_Rect player = (SDL_Rect) {
-		(int)playerObject.position.x - playerObject.size / 2,
-		(int)playerObject.position.y - playerObject.size / 2,
-		playerObject.size,
-		playerObject.size
-	};
+	SDL_Rect player = (SDL_Rect) { (int)player_object.position.x - player_object.size / 2, (int)player_object.position.y - player_object.size / 2, player_object.size, player_object.size };
 
 	SDL_SetRenderDrawColor(p_renderer, 255, 0, 0, 255);
 	SDL_RenderFillRect(p_renderer, &player);
 
 	SDL_SetRenderDrawColor(p_renderer, 0, 0, 255, 255);
-	SDL_RenderDrawLine(
-		p_renderer,
-		playerObject.position.x,
-		playerObject.position.y,
-		playerObject.position.x + playerObject.forward.x * 15,
-		playerObject.position.y + playerObject.forward.y * 15
-	);
+	SDL_RenderDrawLine(p_renderer, player_object.position.x, player_object.position.y, player_object.position.x + player_object.forward.x * 15, player_object.position.y + player_object.forward.y * 15);
 
 	return;
 }
 
-static void drawOrbitPrediction(SDL_Renderer* p_renderer)
+static void draw_orbit_prediction(SDL_Renderer* p_renderer)
 {
 	SDL_SetRenderDrawColor(p_renderer, 0, 255, 0, 255);
-	SDL_RenderDrawLines(p_renderer, possibleOrbitPoints, 1000);
+	SDL_RenderDrawLines(p_renderer, orbit_prediction_points, 1000);
 
 	return;
 }
 
-static void renderMenu(SDL_Renderer* p_renderer, SDL_Texture* p_menuTexture)
+static void render_menu(SDL_Renderer* p_renderer, SDL_Texture* p_menu_texture)
 {
-	static Uint8 timer;
-	bool drawPhrase = false;
+	static int timer;
+	bool draw_phrase = false;
 
 	if (timer < 30)
 	{
@@ -515,36 +376,33 @@ static void renderMenu(SDL_Renderer* p_renderer, SDL_Texture* p_menuTexture)
 	}
 	else
 	{
-		drawPhrase = !drawPhrase;
+		draw_phrase = !draw_phrase;
 	}
 
-	if (!drawPhrase) return;
+	if (!draw_phrase) return;
 
 	SDL_SetRenderDrawColor(p_renderer, 255, 255, 255, 255);
-	SDL_RenderCopy(p_renderer, p_menuTexture, NULL, NULL);
+	SDL_RenderCopy(p_renderer, p_menu_texture, NULL, NULL);
 
 	return;
 }
 
-static void render(
-	SDL_Renderer* p_renderer,
-	SDL_Texture* p_menuTexture
-)
+static void render(SDL_Renderer* p_renderer, SDL_Texture* p_menu_texture)
 {
 	SDL_SetRenderDrawColor(p_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(p_renderer);
 
-	if (gameState != (GameState_t)GAME)
+	if (game_state != (game_state_t)GAME_STATE_GAME)
 	{
-		renderMenu(p_renderer, p_menuTexture);
-		goto presentGraphics;
+		render_menu(p_renderer, p_menu_texture);
+		goto PRESENT_GRAPHICS;
 	}
 
-	renderPlanets(p_renderer);
-	drawOrbitPrediction(p_renderer);
-	renderPlayer(p_renderer);
+	render_planets(p_renderer);
+	draw_orbit_prediction(p_renderer);
+	render_player(p_renderer);
 
-	presentGraphics:
+	PRESENT_GRAPHICS:
 	SDL_RenderPresent(p_renderer);
 
 	return;

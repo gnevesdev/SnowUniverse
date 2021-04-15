@@ -1,7 +1,7 @@
 #ifndef PRIMITIVES_H
 #define PRIMITIVES_H
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 void fillCircle(
 	SDL_Renderer* p_renderer,
