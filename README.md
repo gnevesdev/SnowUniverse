@@ -17,7 +17,7 @@ gcc -O2 src/*.c -lmingw32 -lSDL2main -lSDL2 -o MyBuild.exe
 clang -O2 src/*.c -lSDL2main -lSDL2 -o MyBuild.exe
 ```
 
-On Linux and other UNIX based systems, include the math C library (comes with the C compiler, no need to install it separately). You do not need SDL2main nor mingw32 here:
+On Linux and other UNIX-like systems, include the math C library (comes with the C compiler, no need to install it separately). You do not need SDL2main nor mingw32 here:
 ```sh
 # The math library is just called "m"
 gcc -O2 src/*.c -lSDL2 -lm -o MyBuild
