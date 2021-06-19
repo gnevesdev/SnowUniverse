@@ -204,7 +204,14 @@ static void handle_events(bool* p_running_condition)
     case SDL_KEYDOWN: // In case a key is down
       switch (event.key.keysym.sym)
       {
-        // Movement keys
+        /* Escape will exit the game for compatibility */
+        /* with the window managers that don't have    */
+        /* window close buttons                        */
+      case SDLK_ESCAPE:
+        *p_running_condition = false;
+        break;
+
+        /* Movement keys */
       case SDLK_a:
         player_object.direction = (e_Direction_t)DIRECTION_LEFT;
         break;
@@ -213,13 +220,13 @@ static void handle_events(bool* p_running_condition)
         player_object.direction = (e_Direction_t)DIRECTION_RIGHT;
         break;
 					
-        // Activate the spaceship engine or not
+        /* Activate the spaceship engine or not */
       case SDLK_SPACE:
         if (game_state == (e_GameState_t)GAME_STATE_GAME)
           player_object.engine = true;
         break;
 
-        // Key for returning to the menu
+        /* Key for returning to the menu */
       case SDLK_RETURN:
         if (game_state != (e_GameState_t)GAME_STATE_GAME)
           game_state = (e_GameState_t)GAME_STATE_GAME;
@@ -230,7 +237,7 @@ static void handle_events(bool* p_running_condition)
     case SDL_KEYUP: // In case a key is not pressed
       switch (event.key.keysym.sym)
       {
-        // Movement keys are disabled
+        /* Movement keys are disabled */
       case SDLK_a:
         player_object.direction = (e_Direction_t)DIRECTION_UNDEFINED;
         break;
@@ -239,7 +246,7 @@ static void handle_events(bool* p_running_condition)
         player_object.direction = (e_Direction_t)DIRECTION_UNDEFINED;
         break;
 					
-        // Disabling the engine when the key is not pressed
+        /* Disabling the engine when the key is not pressed */
       case SDLK_SPACE:
         player_object.engine = false;
         break;
