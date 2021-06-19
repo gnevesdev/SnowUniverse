@@ -14,11 +14,17 @@ SDL_Texture* load_texture(const char* path, SDL_Renderer* p_renderer)
     exit(EXIT_FAILURE);
   }
 
-  p_new_texture = SDL_CreateTextureFromSurface(p_renderer, p_image_surface);
+  p_new_texture = SDL_CreateTextureFromSurface(
+    p_renderer,
+    p_image_surface
+  );
 
   if (p_new_texture == NULL)
   {
-    printf("ERROR: Unable to create texture from the pixels of the image at: \"%s\"\n", path);
+    printf(
+      "ERROR: Unable to create texture from the pixels of the image at: \"%s\"\n",
+      path
+    );
     exit(EXIT_FAILURE);
   }
 
@@ -26,3 +32,4 @@ SDL_Texture* load_texture(const char* path, SDL_Renderer* p_renderer)
 
   return p_new_texture;
 }
+

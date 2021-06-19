@@ -7,14 +7,15 @@
 
 typedef struct
 {
-	float x;
-	float y;
-} vector2_t;
+  float x;
+  float y;
+} Vector2_t;
 
-vector2_t vector2_sub(vector2_t vec1, vector2_t vec2);
-vector2_t vector2_sum(vector2_t vec1, vector2_t vec2);
-vector2_t vector2_mul(vector2_t vec1, vector2_t vec2);
-float vector2_distance(vector2_t vec1, vector2_t vec2);
-vector2_t vector2_normalized(vector2_t vector);
+Vector2_t vector2_sub       (Vector2_t vec1, Vector2_t vec2);
+Vector2_t vector2_sum       (Vector2_t vec1, Vector2_t vec2);
+Vector2_t vector2_mul       (Vector2_t vec1, Vector2_t vec2);
+float     vector2_distance  (Vector2_t vec1, Vector2_t vec2);
+Vector2_t vector2_normalized(Vector2_t vector);
 
 #endif
+

@@ -4,30 +4,57 @@
 
 static float safe_sqrt(float value)
 {
-	if (value < 0)
-		value = fabs(value);
-	else if (value == 0)
-		return 0;
+  if (value < 0)
+    value = fabs(value);
+  else if (value == 0)
+    return 0;
 
-	return (float)sqrt(value);
+  return (float)sqrt(value);
 }
 
 static float square(float value) { return value * value; }
 
-vector2_t vector2_sub(vector2_t vec1, vector2_t vec2) { return (vector2_t) { vec1.x - vec2.x, vec1.y - vec2.y }; }
-vector2_t vector2_sum(vector2_t vec1, vector2_t vec2) { return (vector2_t) { vec1.x + vec2.x, vec1.y + vec2.y }; }
-vector2_t vector2_mul(vector2_t vec1, vector2_t vec2) { return (vector2_t) { vec1.x * vec2.x, vec1.y * vec2.y }; }
-
-/* unsigned */ float vector2_distance(vector2_t vec1, vector2_t vec2) { return safe_sqrt(square(vec1.x - vec2.x) + square(vec1.y - vec2.y)); }
-
-vector2_t vector2_normalized(vector2_t vector) {
-	float magnitude = vector2_distance(vector, (vector2_t) { 0, 0 });
-	
-	if (magnitude == 0)
-		return (vector2_t) { 0, 0 };
-
-	vector.x /= magnitude;
-	vector.y /= magnitude;
-
-	return vector;
+Vector2_t vector2_sub(Vector2_t vec1, Vector2_t vec2)
+{
+  return (Vector2_t) {
+    vec1.x - vec2.x,
+    vec1.y - vec2.y
+  };
 }
+
+Vector2_t vector2_sum(Vector2_t vec1, Vector2_t vec2)
+{
+  return (Vector2_t) {
+    vec1.x + vec2.x,
+    vec1.y + vec2.y
+  };
+}
+
+Vector2_t vector2_mul(Vector2_t vec1, Vector2_t vec2)
+{
+  return (Vector2_t) {
+    vec1.x * vec2.x,
+    vec1.y * vec2.y
+  };
+}
+
+/* unsigned */ float vector2_distance(Vector2_t vec1, Vector2_t vec2)
+{
+  return safe_sqrt(
+    square(vec1.x - vec2.x) + square(vec1.y - vec2.y)
+  );
+}
+
+Vector2_t vector2_normalized(Vector2_t vector)
+{
+  float magnitude = vector2_distance(vector, (Vector2_t) { 0, 0 });
+	
+  if (magnitude == 0)
+    return (Vector2_t) { 0, 0 };
+
+  vector.x /= magnitude;
+  vector.y /= magnitude;
+
+  return vector;
+}
+
