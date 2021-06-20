@@ -178,6 +178,9 @@ int main(int argc, char* argv[])
   }
 
   /* Freeing memory */
+  free(orbit_prediction_points);
+  orbit_prediction_points = NULL;
+
   SDL_DestroyTexture(p_menu_texture);
   p_menu_texture = NULL;
   SDL_DestroyRenderer(p_game_renderer);
