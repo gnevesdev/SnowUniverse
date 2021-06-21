@@ -118,6 +118,10 @@ int main(int argc, char* argv[])
   if (!p_game_window)
   {
     puts("ERROR: Could not create the game window!");
+
+    /* erminate SDL before exiting */
+    SDL_Quit();
+
     exit(EXIT_FAILURE);
   }
 
@@ -133,6 +137,12 @@ int main(int argc, char* argv[])
   if (!p_game_renderer)
   {
     puts("ERROR: Could not create a proper renderer!");
+
+    /* Freeing memory that was already allocated */
+    SDL_DestroyWindow(p_game_window);
+    p_game_window = NULL;
+    SDL_Quit();
+
     exit(EXIT_FAILURE);
   }
 
