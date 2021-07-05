@@ -1,7 +1,7 @@
 # SnowUniverse
 A game about orbits and the universe :ringed_planet:
 
-[hadron13](https://github.com/hadron13) challenged me to make a game like [Orbiter's Challenge](https://omnes-ludos.itch.io/orbitoor), created by himself. And I did. In 3 days.
+[hadron13](https://github.com/hadron13) challenged me to make a game like [Orbitoor](https://omnes-ludos.itch.io/orbitoor), created by himself. And I did. In 3 days.
 
 ## Building :hammer_and_wrench:
 The code was tested on Windows and Linux, with GCC, Clang and MSVC compilers. However, other compilers and platforms should work just fine.
